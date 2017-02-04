@@ -1,0 +1,10 @@
+Package: MultiplierDEA
+Type: Package
+Title: MultiplierDEA
+Version: 0.1.4
+Date: 2016-02-20
+Author: Aurobindh Kalathil Puthanpura <kalat2@pdx.edu>
+Maintainer: Aurobindh Kalathil Puthanpura <kalat2@pdx.edu>
+Description: MultiplierDEA provides an R interface to calculate the efficieny and reference sets for each DMUs.
+License: LGPL-2
+LazyData: TRUE
