@@ -111,17 +111,17 @@ if(result$Orientation == 'Input'){
 
 #Calculate cross efficiency Average
 for(i in 1:length(dmu)){
-  ce_ave[,i]<- mean(CrossEfficiency_Matrix[i,])
+  ce_ave[,i]<- mean(CrossEfficiency_Matrix[,i])
 }
 
 #Calculate cross efficiency Max
 for(i in 1:length(dmu)){
-  ce_max[,i]<- max(CrossEfficiency_Matrix[i,])
+  ce_max[,i]<- max(CrossEfficiency_Matrix[,i])
 }
 
 #Calculate cross efficiency Max
 for(i in 1:length(dmu)){
-  ce_min[,i]<- min(CrossEfficiency_Matrix[i,])
+  ce_min[,i]<- min(CrossEfficiency_Matrix[,i])
 }
 
 return(list("ce_matrix" = CrossEfficiency_Matrix, "ce_ave" = ce_ave, "ce_max" = ce_max, "ce_min" = ce_min))
