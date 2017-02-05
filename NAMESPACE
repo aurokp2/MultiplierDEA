@@ -1,1 +1,6 @@
 exportPattern("^[[:alpha:]]+")
+import("lpSolveAPI")
+importFrom("utils", "install.packages", "installed.packages")
+export(Mal_Ben)
+export(DeaMultiplierModel)
+export(CrossEfficiency)
