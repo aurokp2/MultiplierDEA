@@ -1,10 +1,14 @@
 Package: MultiplierDEA
 Type: Package
-Title: MultiplierDEA
-Version: 0.1.4
-Date: 2016-02-20
+Title: Multiplier DEA (Data Envelopment Analysis) and Cross Efficiency 
+Version: 0.1.17
+Date: 2017-12-06
 Author: Aurobindh Kalathil Puthanpura <kalat2@pdx.edu>
 Maintainer: Aurobindh Kalathil Puthanpura <kalat2@pdx.edu>
-Description: MultiplierDEA provides an R interface to calculate the efficieny and reference sets for each DMUs.
+Description: Functions are provided for calculating efficiency using multiplier DEA (Data Envelopment Analysis) and cross efficiency using single and two-phase approach. In addition it includes some data sets for calculating efficiency and cross efficiency.
 License: LGPL-2
-LazyData: TRUE
+Maintainer: Aurobindh Kalathil Puthanpura <kalat2@pdx.edu>
+Repository: CRAN
+Depends: lpSolveAPI
+NeedsCompilation: no
+LazyData: true
