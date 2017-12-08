@@ -5,7 +5,7 @@ Version: 0.1.17
 Date: 2017-12-06
 Author: Aurobindh Kalathil Puthanpura <kalat2@pdx.edu>
 Maintainer: Aurobindh Kalathil Puthanpura <kalat2@pdx.edu>
-Description: Functions are provided for calculating efficiency using multiplier DEA (Data Envelopment Analysis) and cross efficiency using single and two-phase approach. In addition it includes some data sets for calculating efficiency and cross efficiency.
+Description: Functions are provided for calculating efficiency using multiplier DEA (Data Envelopment Analysis): Measuring the efficiency of decision making units (Charnes et al., 1978 <doi:10.1016/0377-2217(78)90138-8>) and cross efficiency using single and two-phase approach. In addition, it includes some datasets for calculating efficiency and cross efficiency.
 License: LGPL-2
 Maintainer: Aurobindh Kalathil Puthanpura <kalat2@pdx.edu>
 Repository: CRAN
