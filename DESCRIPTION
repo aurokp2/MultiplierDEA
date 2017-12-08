@@ -1,7 +1,7 @@
 Package: MultiplierDEA
 Type: Package
 Title: Multiplier Data Envelopment Analysis and Cross Efficiency 
-Version: 0.1.17
+Version: 0.1.18
 Date: 2017-12-06
 Author: Aurobindh Kalathil Puthanpura <kalat2@pdx.edu>
 Maintainer: Aurobindh Kalathil Puthanpura <kalat2@pdx.edu>

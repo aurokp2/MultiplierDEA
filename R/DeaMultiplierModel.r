@@ -144,9 +144,9 @@ CrossEfficiency <-
     return(
       list(
         "ceva_matrix" = CrossEvaluation_Matrix,
-        "ce_ave" = t(ce_ave),
-        "ceva_max" = t(ceva_max),
-        "ceva_min" = t(ceva_min),
+        "ce_ave" = ce_ave,
+        "ceva_max" = ceva_max,
+        "ceva_min" = ceva_min,
         "vx" = result$vx,
         "uy" = result$uy,
         "Model_Status" = result$Model_Status
