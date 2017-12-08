@@ -9,12 +9,8 @@ Benevolent and Malevolent Model
 Two-Phase Cross efficiency approach.
 }
 \usage{
-<<<<<<< HEAD
 Mal_Ben(x = x, y = y, rts ="crs", orientation = "input", phase = "mal",
 weightRestriction, include = TRUE)
-=======
-Mal_Ben(x = x, y = y, rts ="crs", orientation = "input", phase = "mal", weightRestriction, include = TRUE)
->>>>>>> 2ccecc6532dda8bed394cb4cfd10c44ab65c02eb
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -61,13 +57,9 @@ ce_ave - cross-efficiency scores.
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
 \examples{
-<<<<<<< HEAD
 #Example from Kenneth R. Baker: Optimization Modeling with Spreadsheets, Third Edition,p. 176,
 #John Wiley and Sons, Inc.
 
-=======
-# Example from Kenneth R. Baker: Optimization Modeling with Spreadsheets, Third Edition, p. 176, John Wiley & Sons, Inc.
->>>>>>> 2ccecc6532dda8bed394cb4cfd10c44ab65c02eb
 dmu <- c("A", "B", "C", "D", "E", "F")
 x <- data.frame(c(150,400,320,520,350,320),c(0.2,0.7,1.2,2.0,1.2,0.7))
 rownames(x) <- dmu
