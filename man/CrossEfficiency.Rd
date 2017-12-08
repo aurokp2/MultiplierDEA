@@ -38,8 +38,12 @@ ce_ave - cross-efficiency scores.
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
 \examples{
+<<<<<<< HEAD
 #Example from Kenneth R. Baker: Optimization Modeling with Spreadsheets, Third Edition,p. 176,
 #John Wiley and Sons, Inc.
+=======
+# Example from Kenneth R. Baker: Optimization Modeling with Spreadsheets, Third Edition, p. 176, John Wiley & Sons, Inc.
+>>>>>>> 2ccecc6532dda8bed394cb4cfd10c44ab65c02eb
 
 dmu <- c("A", "B", "C", "D", "E", "F")
 x <- data.frame(c(150,400,320,520,350,320),c(0.2,0.7,1.2,2.0,1.2,0.7))

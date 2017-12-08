@@ -184,13 +184,21 @@ dict.solveStatus<-cbind(key= c(0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13),
 # Check that value in legal l i s t options
 # If on legal list, return lowercase short form option
 #
+<<<<<<< HEAD
 
 .checkoption <- function(value, name, options.l = c(TRUE, FALSE)) {
+=======
+.checkoption <- function(value, name, options.l = c(true, false)) {
+>>>>>>> 2ccecc6532dda8bed394cb4cfd10c44ab65c02eb
   if (length(value) != 1) {
     stop("illegal vector for ",
          name,
          " option must be single value",
+<<<<<<< HEAD
          call. = FALSE)
+=======
+         call. = false)
+>>>>>>> 2ccecc6532dda8bed394cb4cfd10c44ab65c02eb
   }
   # If options are character
   if (is.character(options.l[1])) {
@@ -201,7 +209,11 @@ dict.solveStatus<-cbind(key= c(0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13),
       if (i > 0)
         return(options.l[i])
     }
+<<<<<<< HEAD
   } else if (is.logical(options.l[1])) {
+=======
+  } else if (is.logical(Options.l[1])) {
+>>>>>>> 2ccecc6532dda8bed394cb4cfd10c44ab65c02eb
     # Logical options
     if (is.logical(value)) {
       return(value)

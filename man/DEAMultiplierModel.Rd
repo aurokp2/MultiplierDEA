@@ -43,8 +43,12 @@ Efficiency, and lambda values are returned.
 
 
 \examples{
+<<<<<<< HEAD
 #Example from Kenneth R. Baker: Optimization Modeling with Spreadsheets, Third Edition,p. 176,
 #John Wiley and Sons, Inc.
+=======
+# Example from Kenneth R. Baker: Optimization Modeling with Spreadsheets, Third Edition, p. 176, John Wiley & Sons, Inc.
+>>>>>>> 2ccecc6532dda8bed394cb4cfd10c44ab65c02eb
 
 dmu <- c("A", "B", "C", "D", "E", "F")
 
@@ -59,6 +63,7 @@ colnames(y)[1] <- c("Reimbursed")
 colnames(y)[2] <- c("Private")
 
 #Creating the weight restriction data frame with Upper bound
+<<<<<<< HEAD
 weightRestriction<-data.frame(lower = c(1), numerator = c("StartHours"),
 denominator = c("Supplies"), upper = c(2))
 
@@ -69,6 +74,16 @@ denominator = c("Supplies"))
 #Creating the weight restriction data frame with Upper bound and Na, Inf or NaN
 weightRestriction<-data.frame(lower = c(1,2), numerator = c("StartHours","Reimbursed"),
 denominator = c("Supplies","Private"), upper = c(2,Inf))
+=======
+weightRestriction<-data.frame(lower = c(1), numerator = c("StartHours"), denominator = c("Supplies"), upper = c(2))
+
+#Creating the weight restriction data frame without Upper bound
+weightRestriction<-data.frame(lower = c(1), numerator = c("StartHours"), denominator = c("Supplies"))
+
+#Creating the weight restriction data frame with Upper bound and Na, Inf or NaN
+weightRestriction<-data.frame(lower = c(1,2), numerator = c("StartHours","Reimbursed"), denominator = c("Supplies","Private"), upper = c(2,Inf))
+
+>>>>>>> 2ccecc6532dda8bed394cb4cfd10c44ab65c02eb
 
 
 # Calculate the efficiency score without weight Restriction
