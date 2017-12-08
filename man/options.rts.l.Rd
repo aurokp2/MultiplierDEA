@@ -9,6 +9,12 @@ Provides the rts (returns to scale) option.
 Provides the rts (returns to scale) option values.
 }
 
+\examples{
+# List the returns to scale option used as arguments.
+
+options.rts.l
+}
+
 \keyword{ DEA }
 \keyword{ Multiplier DEA Model }
 \keyword{ Cross Efficiency }

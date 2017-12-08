@@ -8,6 +8,11 @@ Provides the solver status codes.
 \description{
 Provides the solver status codes and description.
 }
+\examples{
+#List status codes and description.
+
+dict.solveStatus
+}
 
 \keyword{ DEA }
 \keyword{ Multiplier DEA Model }

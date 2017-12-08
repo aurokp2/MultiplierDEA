@@ -9,6 +9,12 @@ Provides the second phase options.
 Provides the second phase options available for Mal_Ben function.
 }
 
+\examples{
+# List the phase option used as arguments.
+
+options.phase.l
+}
+
 \keyword{ DEA }
 \keyword{ Multiplier DEA Model }
 \keyword{ Cross Efficiency }

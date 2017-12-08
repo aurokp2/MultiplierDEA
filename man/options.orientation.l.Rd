@@ -9,6 +9,13 @@ Provides the orientation option.
 Provides the orientation option values.
 }
 
+\examples{
+# List the orientation option used as arguments.
+
+options.orientation.l
+}
+
+
 \keyword{ DEA }
 \keyword{ Multiplier DEA Model }
 \keyword{ Cross Efficiency }
