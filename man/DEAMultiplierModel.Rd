@@ -79,7 +79,7 @@ print(result$Efficiency)
 
 # Calculate the efficiency score with weight Restriction
 result <- DeaMultiplierModel(x,y,"crs", "input", weightRestriction)
-# Examine the efficiency score for DMUs
+  # Examine the efficiency score for DMUs
 print(result$Efficiency)
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
@@ -92,5 +92,9 @@ print(result$Efficiency)
 \keyword{ Assurance Region }
 \keyword{ Malevolent }
 \keyword{ Benevolent }
-\keyword{ Two-Phase Approach }% __ONLY ONE__ keyword per line
+\keyword{ Two-Phase Approach }
+\keyword{ Super Efficiency }
+\keyword{ SDEA }
+\keyword{ Malmquist Productivity Index }
+\keyword{ MPI }% __ONLY ONE__ keyword per line
 

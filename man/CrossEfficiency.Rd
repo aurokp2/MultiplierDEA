@@ -67,4 +67,8 @@ print(result$ce_ave)
 \keyword{ Assurance Region }
 \keyword{ Malevolent }
 \keyword{ Benevolent }
-\keyword{ Two-Phase Approach }% __ONLY ONE__ keyword per line
+\keyword{ Two-Phase Approach }
+\keyword{ Super Efficiency }
+\keyword{ SDEA }
+\keyword{ Malmquist Productivity Index }
+\keyword{ MPI }% __ONLY ONE__ keyword per line

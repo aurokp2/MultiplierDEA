@@ -3,7 +3,7 @@
 # Copyright Aurobindh Kalathil Puthanpura, ETA, PSU, 2015
 # Use granted under BSD license terms
 #
-# R DEA M u l t ip l ie r Model Package
+# R DEA Multiplier Model Package
 #
 # Author: Aurobindh Kalathil Puthanpura
 # Revision: 1
@@ -1288,3 +1288,530 @@ dict.solveStatus<-cbind(key= c(0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13),
   return(list("Phase2_Efficiency" = 1/Result.CEM, "Phase2_Lambda" = Result.Lambda, "Phase2_vx" = Result.vx, "Phase2_uy" = Result.uy, "Phase2_Free_weights" = Result.Free_weights, "ceva_matrix" = CrossEvaluation_Matrix,
               "ce_ave" = ce_ave, "ceva_max" = ceva_max, "ceva_min" = ceva_min, "Phase2_Model_Status" = Result.status))
 }
+
+
+.sdea_internal<-function(x, y, orientation="input", rts ="crs"){
+  #Results setup
+  Results <- list()
+
+  Results$Input <- x
+  Results$Output <- y
+  Results$Orientation <- orientation
+  Results$RTS <- rts
+
+  Results$Efficiency <- matrix(nrow = nrow(x))
+  Results$Lambda <- matrix(nrow = nrow(x), ncol = nrow(x))
+  Results$StatusData <- vector(mode="logical", nrow(x))
+
+  dmu <- row.names(x)
+
+  # Assign names to Matrix for efficiency
+  rownames(Results$Efficiency) <- dmu
+  colnames(Results$Efficiency)[1] <- c("Eff")
+
+  # Assign names to Matrix for efficiency
+  rownames(Results$Lambda) <- dmu
+  colnames(Results$Lambda) <- dmu
+
+
+  nd<- nrow(x)
+  nx <- ncol(x)
+  ny <- ncol(y)
+
+  #Model setup
+  mobj <- "min"
+  if(orientation=="input")
+  {
+    mobj <- "min"
+  }else if(orientation=="output")
+  {
+    mobj <- "max"
+  }
+
+  #Create model
+  for(k in 1:nd)
+  {
+    vlambda <- vbeta <- vtheta <- j <- NULL
+
+    result <- ompr::MIPModel()
+    result <- ompr::add_variable(result, vlambda[j], j=1:nd, type = "continuous", lb = 0)
+    result <- ompr::add_variable(result, vtheta, type = "continuous", lb=0)
+    result <- ompr::set_objective(result, vtheta, mobj)
+
+
+    # input constraints
+    if(orientation=="input")
+    {
+      for (i in 1:nx) {
+        result <- ompr::add_constraint(result, ompr::sum_expr(vlambda[j] * x[j,i], j = 1:nd) <=  vtheta * x[k,i])
+      }
+    }else if(orientation=="output")
+    {
+      for (i in 1:nx) {
+        result <- ompr::add_constraint(result, ompr::sum_expr(vlambda[j] * x[j,i], j = 1:nd) <= x[k,i])
+      }
+    }
+
+
+    # output constraints
+    if(orientation=="input")
+    {
+      for(o in 1:ny){
+        result<- ompr::add_constraint(result, ompr::sum_expr(vlambda[j] * y[j,o], j = 1:nd) >=  y[k,o])
+      }
+    }else if(orientation=="output")
+    {
+      for(o in 1:ny){
+        result<- ompr::add_constraint(result, ompr::sum_expr(vlambda[j] * y[j,o], j = 1:nd) >= vtheta * y[k,o])
+      }
+    }
+
+    # rts constraints
+    if(rts == "vrs")
+    {
+      result <- ompr::add_constraint(result, ompr::sum_expr(vlambda[j], j=1:nd) == 1)
+    }
+
+    # add lambda constraints for dmu under sonsideration as 0 for SDEA
+    result<- ompr::add_constraint(result, vlambda[k] == 0)
+
+    result <- ompr::solve_model(result, ompr.roi::with_ROI(solver = "glpk"))
+
+    rtheta <- ompr::get_solution(result,vtheta)
+    rlambda <-  ompr::get_solution(result,vlambda[j])
+    rstatus <- ompr::solver_status(result)
+
+    if(rstatus == "success"){
+      Results$Efficiency[k] <- rtheta
+      Results$Lambda[k, ] <- rlambda$value
+      Results$StatusData[k] <- rstatus
+    }else
+    {
+      Results$Efficiency[k] <- NaN
+      Results$Lambda[k, ] <- 0
+      Results$StatusData[k] <- rstatus
+    }
+
+  }
+
+  if(orientation=="output")
+  {
+    Results$Efficiency <- 1/Results$Efficiency
+  }
+
+
+  return(Results)
+}
+
+
+.sdea_cook_internal<-function(x, y, orientation="input", rts ="crs", cook=TRUE){
+
+  Results <- list()
+
+  Results$Input <- x
+  Results$Output <- y
+  Results$Orientation <- orientation
+  Results$RTS <- rts
+
+  Results$Efficiency <- matrix(nrow = nrow(x))
+  Results$Theta <- matrix(nrow = nrow(x))
+  Results$Beta <- matrix(nrow = nrow(x))
+  Results$Lambda <- matrix(nrow = nrow(x), ncol = nrow(x))
+  Results$StatusData <- vector(mode="logical", nrow(x))
+
+  dmu <- row.names(x)
+
+  # Assign names to Matrix for efficiency
+  rownames(Results$Efficiency) <- dmu
+  colnames(Results$Efficiency)[1] <- c("Eff")
+
+  # Assign names to Matrix for theta
+  rownames(Results$Theta) <- dmu
+  colnames(Results$Theta)[1] <- c("Theta")
+
+  # Assign names to Matrix for Beta
+  rownames(Results$Beta) <- dmu
+  colnames(Results$Beta)[1] <- c("Beta")
+
+  # Assign names to Matrix for efficiency
+  rownames(Results$Lambda) <- dmu
+  colnames(Results$Lambda) <- dmu
+
+
+  nd<- nrow(x)
+  nx <- ncol(x)
+  ny <- ncol(y)
+
+
+  #Model setup
+  mobj <- "min"
+
+  # Cook user defined large number
+  vm <- 10^5
+
+  #Create model
+  for(k in 1:nd)
+  {
+    vlambda <- vbeta <- vtheta <- j <- NULL
+
+    result <- ompr::MIPModel()
+    result <- ompr::add_variable(result, vlambda[j], j=1:nd, type = "continuous", lb = 0)
+    result <- ompr::add_variable(result, vbeta, type = "continuous", lb=0)
+    result <- ompr::add_variable(result, vtheta, type = "continuous")
+    result <- ompr::set_objective(result, (vtheta + vm * vbeta), mobj)
+
+    # input constraints
+    if(orientation=="input")
+    {
+      for (i in 1:nx) {
+        result <- ompr::add_constraint(result, ompr::sum_expr(vlambda[j] * x[j,i], j = 1:nd) <=  (1 + vtheta) * x[k,i])
+      }
+    }else if(orientation=="output")
+    {
+      for (i in 1:nx) {
+        result <- ompr::add_constraint(result, ompr::sum_expr(vlambda[j] * x[j,i], j = 1:nd) <=  (1 + vbeta) * x[k,i])
+      }
+    }
+
+
+    # output constraints
+    if(orientation=="input")
+    {
+      for(o in 1:ny){
+        result<- ompr::add_constraint(result, ompr::sum_expr(vlambda[j] * y[j,o], j = 1:nd) >= (1 - vbeta) * y[k,o])
+      }
+    }else if(orientation=="output")
+    {
+      for(o in 1:ny){
+        result<- ompr::add_constraint(result, ompr::sum_expr(vlambda[j] * y[j,o], j = 1:nd) >= (1 - vtheta) * y[k,o])
+      }
+    }
+
+    # rts constraints
+    if(rts == "vrs")
+    {
+      result <- ompr::add_constraint(result, ompr::sum_expr(vlambda[j], j=1:nd) == 1)
+    }
+
+    # add lambda constraints for dmu under sonsideration as 0 for SDEA
+    result<- ompr::add_constraint(result, vlambda[k] == 0)
+
+    result <- ompr::solve_model(result, ompr.roi::with_ROI(solver = "glpk"))
+
+    rtheta <- ompr::get_solution(result,vtheta)
+    rbeta <- ompr::get_solution(result,vbeta)
+    rlambda <-  ompr::get_solution(result,vlambda[j])
+    rstatus <- ompr::solver_status(result)
+
+
+    if(orientation == "input"){
+      if(rbeta == 0){
+        Results$Efficiency[k] <- 1 + rtheta
+        Results$Theta[k] <- rtheta
+        Results$Beta[k] <- rbeta
+        Results$Lambda[k, ] <- rlambda$value
+        Results$StatusData[k] <- rstatus
+      }else
+      {
+        Results$Efficiency[k] <- 1 + rtheta + 1/(1-rbeta)
+        Results$Theta[k] <- rtheta
+        Results$Beta[k] <- rbeta
+        Results$Lambda[k, ] <- rlambda$value
+        Results$StatusData[k] <- rstatus
+      }
+    }else if(orientation == "output"){
+      if(rbeta == 0){
+        Results$Efficiency[k] <- 1/(1-rtheta)
+        Results$Theta[k] <- rtheta
+        Results$Beta[k] <- rbeta
+        Results$Lambda[k, ] <- rlambda$value
+        Results$StatusData[k] <- rstatus
+      }else
+      {
+        Results$Efficiency[k] <- 1 + rbeta + 1/(1-rtheta)
+        Results$Theta[k] <- rtheta
+        Results$Beta[k] <- rbeta
+        Results$Lambda[k, ] <- rlambda$value
+        Results$StatusData[k] <- rstatus
+      }
+    }
+
+  }
+
+
+  return(Results)
+
+}
+
+
+
+.sdea_mpi_internal<-function(x, y, orientation="input", rts ="crs", Cook=FALSE, ref.x=NULL, ref.y=NULL){
+
+  if(ncol(x) != ncol(ref.x) && ncol(y) != ncol(ref.y)){
+    stop("input or output columns for x,y ref.x amd ref.y does not match")
+  }
+  #Results setup
+  Results <- list()
+
+  Results$Input <- x
+  Results$Output <- y
+  Results$Orientation <- orientation
+  Results$RTS <- rts
+  Results$ref.x <- ref.x
+  Results$ref.y <- ref.y
+
+  Results$Efficiency <- matrix(nrow = nrow(x))
+  Results$Lambda <- matrix(nrow = nrow(x), ncol = nrow(ref.x))
+  Results$StatusData <- vector(mode="logical", nrow(x))
+
+  dmu <- row.names(x)
+  dmu_ref <- row.names(ref.x)
+
+  # Assign names to Matrix for efficiency
+  rownames(Results$Efficiency) <- dmu
+  colnames(Results$Efficiency)[1] <- c("Eff")
+
+  # Assign names to Matrix for efficiency
+  rownames(Results$Lambda) <- dmu
+  colnames(Results$Lambda) <- dmu_ref
+
+  #DMUs under consideration
+  nd<- nrow(x)
+  nx <- ncol(x)
+  ny <- ncol(y)
+
+  #Reference DMUS
+  ndr <- nrow(ref.x)
+  nxr <- ncol(ref.x)
+  nyr <- ncol(ref.y)
+
+  #Model setup
+  mobj <- "min"
+  if(orientation=="input")
+  {
+    mobj <- "min"
+  }else if(orientation=="output")
+  {
+    mobj <- "max"
+  }
+
+  #Create model
+  for(k in 1:nd)
+  {
+    vlambda <- vbeta <- vtheta <- j <- NULL
+
+    result <- ompr::MIPModel()
+    result <- ompr::add_variable(result, vlambda[j], j=1:ndr, type = "continuous", lb = 0)
+    result <- ompr::add_variable(result, vtheta, type = "continuous", lb=0)
+    result <- ompr::set_objective(result, vtheta, mobj)
+
+
+    # input constraints
+    if(orientation=="input")
+    {
+      for (i in 1:nx) {
+        result <- ompr::add_constraint(result, ompr::sum_expr(vlambda[j] * ref.x[j,i], j = 1:ndr) <=  vtheta * x[k,i])
+      }
+    }else if(orientation=="output")
+    {
+      for (i in 1:nx) {
+        result <- ompr::add_constraint(result, ompr::sum_expr(vlambda[j] * ref.x[j,i], j = 1:ndr) <= x[k,i])
+      }
+    }
+
+
+    # output constraints
+    if(orientation=="input")
+    {
+      for(o in 1:ny){
+        result<- ompr::add_constraint(result, ompr::sum_expr(vlambda[j] * ref.y[j,o], j = 1:ndr) >=  y[k,o])
+      }
+    }else if(orientation=="output")
+    {
+      for(o in 1:ny){
+        result<- ompr::add_constraint(result, ompr::sum_expr(vlambda[j] * ref.y[j,o], j = 1:ndr) >= vtheta * y[k,o])
+      }
+    }
+
+    # rts constraints
+    if(rts == "vrs")
+    {
+      result <- ompr::add_constraint(result, ompr::sum_expr(vlambda[j], j=1:ndr) == 1)
+    }
+
+
+
+    result <- ompr::solve_model(result, ompr.roi::with_ROI(solver = "glpk"))
+
+    rtheta <- ompr::get_solution(result,vtheta)
+    rlambda <-  ompr::get_solution(result,vlambda[j])
+    rstatus <- ompr::solver_status(result)
+
+    if(rstatus == "success"){
+      Results$Efficiency[k] <- rtheta
+      Results$Lambda[k, ] <- rlambda$value
+      Results$StatusData[k] <- rstatus
+    }else
+    {
+      Results$Efficiency[k] <- NaN
+      Results$Lambda[k, ] <- 0
+      Results$StatusData[k] <- rstatus
+    }
+
+  }
+
+  if(orientation=="output")
+  {
+    Results$Efficiency <- 1/Results$Efficiency
+  }
+
+
+  return(Results)
+}
+
+
+.sdea_cook_mpi_internal<-function(x, y, orientation="input", rts ="crs", Cook=TRUE, ref.x=NULL, ref.y=NULL){
+  if(ncol(x) != ncol(ref.x) && ncol(y) != ncol(ref.y)){
+    stop("input or output columns for x,y ref.x amd ref.y does not match")
+  }
+  Results <- list()
+
+  Results$Input <- x
+  Results$Output <- y
+  Results$Orientation <- orientation
+  Results$RTS <- rts
+  Results$ref.x <- ref.x
+  Results$ref.y <- ref.y
+
+  Results$Efficiency <- matrix(nrow = nrow(x))
+  Results$Theta <- matrix(nrow = nrow(x))
+  Results$Beta <- matrix(nrow = nrow(x))
+  Results$Lambda <- matrix(nrow = nrow(x), ncol = nrow(ref.x))
+  Results$StatusData <- vector(mode="logical", nrow(x))
+
+  dmu <- row.names(x)
+  dmu_ref <- row.names(ref.x)
+
+  # Assign names to Matrix for efficiency
+  rownames(Results$Efficiency) <- dmu
+  colnames(Results$Efficiency)[1] <- c("Eff")
+
+  # Assign names to Matrix for theta
+  rownames(Results$Theta) <- dmu
+  colnames(Results$Theta)[1] <- c("Theta")
+
+  # Assign names to Matrix for Beta
+  rownames(Results$Beta) <- dmu
+  colnames(Results$Beta)[1] <- c("Beta")
+
+  # Assign names to Matrix for efficiency
+  rownames(Results$Lambda) <- dmu
+  colnames(Results$Lambda) <- dmu_ref
+
+  #DMUs under consideration
+  nd<- nrow(x)
+  nx <- ncol(x)
+  ny <- ncol(y)
+
+  #Reference DMUS
+  ndr <- nrow(ref.x)
+  nxr <- ncol(ref.x)
+  nyr <- ncol(ref.y)
+
+
+  #Model setup
+  mobj <- "min"
+
+  # Cook user defined large number
+  vm <- 10^5
+
+  #Create model
+  for(k in 1:nd)
+  {
+    vlambda <- vbeta <- vtheta <- j <- NULL
+
+    result <- ompr::MIPModel()
+    result <- ompr::add_variable(result, vlambda[j], j=1:ndr, type = "continuous", lb = 0)
+    result <- ompr::add_variable(result, vbeta, type = "continuous", lb=0)
+    result <- ompr::add_variable(result, vtheta, type = "continuous")
+    result <- ompr::set_objective(result, (vtheta + vm * vbeta), mobj)
+
+    # input constraints
+    if(orientation=="input")
+    {
+      for (i in 1:nx) {
+        result <- ompr::add_constraint(result, ompr::sum_expr(vlambda[j] * ref.x[j,i], j = 1:ndr) <=  (1 + vtheta) * x[k,i])
+      }
+    }else if(orientation=="output")
+    {
+      for (i in 1:nx) {
+        result <- ompr::add_constraint(result, ompr::sum_expr(vlambda[j] * ref.x[j,i], j = 1:ndr) <=  (1 + vbeta) * x[k,i])
+      }
+    }
+
+
+    # output constraints
+    if(orientation=="input")
+    {
+      for(o in 1:ny){
+        result<- ompr::add_constraint(result, ompr::sum_expr(vlambda[j] * ref.y[j,o], j = 1:ndr) >= (1 - vbeta) * y[k,o])
+      }
+    }else if(orientation=="output")
+    {
+      for(o in 1:ny){
+        result<- ompr::add_constraint(result, ompr::sum_expr(vlambda[j] * ref.y[j,o], j = 1:ndr) >= (1 - vtheta) * y[k,o])
+      }
+    }
+
+    # rts constraints
+    if(rts == "vrs")
+    {
+      result <- ompr::add_constraint(result, ompr::sum_expr(vlambda[j], j=1:ndr) == 1)
+    }
+
+    result <- ompr::solve_model(result, ompr.roi::with_ROI(solver = "glpk"))
+
+    rtheta <- ompr::get_solution(result,vtheta)
+    rbeta <- ompr::get_solution(result,vbeta)
+    rlambda <-  ompr::get_solution(result,vlambda[j])
+    rstatus <- ompr::solver_status(result)
+
+
+    if(orientation == "input"){
+      if(rbeta == 0){
+        Results$Efficiency[k] <- 1 + rtheta
+        Results$Theta[k] <- rtheta
+        Results$Beta[k] <- rbeta
+        Results$Lambda[k, ] <- rlambda$value
+        Results$StatusData[k] <- rstatus
+      }else
+      {
+        Results$Efficiency[k] <- 1 + rtheta + 1/(1-rbeta)
+        Results$Theta[k] <- rtheta
+        Results$Beta[k] <- rbeta
+        Results$Lambda[k, ] <- rlambda$value
+        Results$StatusData[k] <- rstatus
+      }
+    }else if(orientation == "output"){
+      if(rbeta == 0){
+        Results$Efficiency[k] <- 1/(1-rtheta)
+        Results$Theta[k] <- rtheta
+        Results$Beta[k] <- rbeta
+        Results$Lambda[k, ] <- rlambda$value
+        Results$StatusData[k] <- rstatus
+      }else
+      {
+        Results$Efficiency[k] <- 1 + rbeta + 1/(1-rtheta)
+        Results$Theta[k] <- rtheta
+        Results$Beta[k] <- rbeta
+        Results$Lambda[k, ] <- rlambda$value
+        Results$StatusData[k] <- rstatus
+      }
+    }
+
+  }
+
+
+  return(Results)
+}
+

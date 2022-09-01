@@ -407,3 +407,204 @@ Mal_Ben <-
     }
 
   }
+
+SDEA <- function(x=x, y=y, orientation="input", rts ="crs", Cook=FALSE){
+  # check ip, op, orientation and rts
+  rts <- .checkoption(rts,          "rts",          options.rts.l)
+  orientation <- .checkoption(orientation,  "orientation",  options.orientation.l)
+
+
+  # Check that x & y are legal inputs & convert to standard values
+  x <- .checkData(x, "x")
+  y <- .checkData(y, "y")
+
+  .checkDataGood(x, y)
+
+  # Check the orientation and rts to decide the internal function to choose
+  if (Cook==FALSE){
+    results <- .sdea_internal(x=x, y=y,orientation=orientation, rts=rts)
+    return(results)
+  }else if(Cook==TRUE){
+    results <- .sdea_cook_internal(x=x, y=y,orientation=orientation, rts=rts,cook=TRUE)
+    return(results)
+  }
+
+}
+
+
+MPI <-function(Dataset=Dataset, DMU_colName=DMU_colName, IP_colNames=IP_colNames, OP_ColNames=OP_ColNames, Period_ColName=Period_ColName, Periods=Periods, rts="crs", orientation="input", scale=FALSE){
+
+  rts <- .checkoption(rts,          "rts",          options.rts.l)
+  orientation <- .checkoption(orientation,  "orientation",  options.orientation.l)
+
+  # Dataframe to store all
+  results <- data.frame(stringsAsFactors = FALSE)
+
+  # Compare for all the years
+  for(j in 1:(length(Periods)-1)){
+    # store temporary results
+    results_temp <- data.frame(stringsAsFactors = FALSE)
+
+    # Get data for two time periods
+    data_t1 <- Dataset %>% filter(eval(parse(text = Period_ColName)) == Periods[j])
+    data_t2 <- Dataset %>% filter(eval(parse(text = Period_ColName)) == Periods[j + 1])
+
+    # Get Dmu names from time period t
+    dmu_t1 <- data_t1[,DMU_colName]
+
+    # IP columns for period t
+    x_temp_t1 <- as.data.frame(data_t1[IP_colNames])
+    row.names(x_temp_t1) <- dmu_t1
+
+    # OP columns for period t
+    y_temp_t1 <- as.data.frame(data_t1[OP_ColNames])
+    row.names(y_temp_t1) <- dmu_t1
+
+
+    # Get Dmu names from time period t + 1
+    dmu_t2 <- data_t2[,DMU_colName]
+
+    # IP columns for period t + 1
+    x_temp_t2 <- as.data.frame(data_t2[IP_colNames])
+    row.names(x_temp_t2) <- dmu_t2
+
+    # OP columns for period t + 1
+    y_temp_t2 <- as.data.frame(data_t2[OP_ColNames])
+    row.names(y_temp_t2) <- dmu_t2
+
+    # Assign temporary dataframe with Unique DMU names from t and t + 1
+    results_temp <- c(as.character(dmu_t1), as.character(dmu_t2)) %>% as.data.frame()
+    colnames(results_temp)[1] <- "DMU"
+    results_temp <- results_temp %>% select("DMU") %>% unique()
+
+    # Efficiency for DMU in t with reference to time period t
+    # Determine crs et1t1
+    if (rts == "crs" || scale){
+      et1t1_temp<-.sdea_mpi_internal(x=x_temp_t1, y=y_temp_t1, orientation=orientation, rts="crs", Cook=FALSE, ref.x=x_temp_t1, ref.y=y_temp_t1)
+      et1t1 <- cbind(rownames(et1t1_temp$Eff), et1t1_temp$Eff) %>% as.data.frame()
+      colnames(et1t1)[1] <- "DMU"
+      colnames(et1t1)[2] <- "et1t1.crs"
+
+      results_temp <- left_join(results_temp,et1t1, by = c("DMU" = "DMU"))
+    }
+
+    # Determine vrs et1t1
+    if (rts == "vrs"){
+      et1t1_temp<-.sdea_cook_mpi_internal(x=x_temp_t1, y=y_temp_t1, orientation=orientation, rts="vrs", Cook=TRUE, ref.x=x_temp_t1, ref.y=y_temp_t1)
+      et1t1 <- cbind(rownames(et1t1_temp$Eff), et1t1_temp$Eff) %>% as.data.frame()
+      colnames(et1t1)[1] <- "DMU"
+      colnames(et1t1)[2] <- "et1t1.vrs"
+
+      results_temp <- left_join(results_temp,et1t1, by = c("DMU" = "DMU"))
+    }
+
+    # Efficiency for DMU in t + 1 with reference to time period t + 1
+    # Determine crs et2t2
+    if (rts == "crs" || scale){
+      et2t2_temp<-.sdea_mpi_internal(x=x_temp_t2, y=y_temp_t2, orientation=orientation, rts="crs", Cook=FALSE, ref.x=x_temp_t2, ref.y=y_temp_t2)
+      et2t2 <- cbind(rownames(et2t2_temp$Eff), et2t2_temp$Eff) %>% as.data.frame()
+      colnames(et2t2)[1] <- "DMU"
+      colnames(et2t2)[2] <- "et2t2.crs"
+
+      results_temp <- left_join(results_temp,et2t2, by = c("DMU" = "DMU"))
+    }
+
+    # Determine vrs et2t2
+    if (rts == "vrs"){
+      et2t2_temp<-.sdea_cook_mpi_internal(x=x_temp_t2, y=y_temp_t2, orientation=orientation, rts="vrs", Cook=TRUE, ref.x=x_temp_t2, ref.y=y_temp_t2)
+      et2t2 <- cbind(rownames(et2t2_temp$Eff), et2t2_temp$Eff) %>% as.data.frame()
+      colnames(et2t2)[1] <- "DMU"
+      colnames(et2t2)[2] <- "et2t2.vrs"
+
+      results_temp <- left_join(results_temp,et2t2, by = c("DMU" = "DMU"))
+    }
+
+    # Efficiency for DMU in t with reference to time period t + 1
+    # Determine crs et1t2
+    if (rts == "crs" || scale){
+      et1t2_temp<-.sdea_mpi_internal(x=x_temp_t2, y=y_temp_t2, orientation=orientation, rts="crs", Cook=FALSE, ref.x=x_temp_t1, ref.y=y_temp_t1)
+      et1t2 <- cbind(rownames(et1t2_temp$Eff), et1t2_temp$Eff) %>% as.data.frame()
+      colnames(et1t2)[1] <- "DMU"
+      colnames(et1t2)[2] <- "et1t2.crs"
+
+      results_temp <- left_join(results_temp,et1t2, by = c("DMU" = "DMU"))
+    }
+
+    # Determine vrs et1t2
+    if (rts == "vrs"){
+      et1t2_temp<-.sdea_cook_mpi_internal(x=x_temp_t2, y=y_temp_t2, orientation=orientation, rts="vrs", Cook=TRUE, ref.x=x_temp_t1, ref.y=y_temp_t1)
+      et1t2 <- cbind(rownames(et1t2_temp$Eff), et1t2_temp$Eff) %>% as.data.frame()
+      colnames(et1t2)[1] <- "DMU"
+      colnames(et1t2)[2] <- "et1t2.vrs"
+
+      results_temp <- left_join(results_temp,et1t2, by = c("DMU" = "DMU"))
+    }
+
+    # Efficiency for DMU in t + 1 with reference to time period t
+    # Determine crs et2t1
+    if (rts == "crs" || scale){
+      et2t1_temp<-.sdea_mpi_internal(x=x_temp_t1, y=y_temp_t1, orientation=orientation, rts="crs", Cook=FALSE, ref.x=x_temp_t2, ref.y=y_temp_t2)
+      et2t1 <- cbind(rownames(et2t1_temp$Eff), et2t1_temp$Eff) %>% as.data.frame()
+      colnames(et2t1)[1] <- "DMU"
+      colnames(et2t1)[2] <- "et2t1.crs"
+
+      results_temp <- left_join(results_temp,et2t1, by = c("DMU" = "DMU"))
+    }
+
+    # Determine vrs et2t1
+    if (rts == "vrs"){
+      et2t1_temp<-.sdea_cook_mpi_internal(x=x_temp_t1, y=y_temp_t1, orientation=orientation, rts="vrs", Cook=TRUE, ref.x=x_temp_t2, ref.y=y_temp_t2)
+      et2t1 <- cbind(rownames(et2t1_temp$Eff), et2t1_temp$Eff) %>% as.data.frame()
+      colnames(et2t1)[1] <- "DMU"
+      colnames(et2t1)[2] <- "et2t1.vrs"
+
+      results_temp <- left_join(results_temp,et2t1, by = c("DMU" = "DMU"))
+    }
+
+    # Calculate (pure) technical efficiency change
+    if(rts == "crs") {
+      results_temp["tec"] <- as.numeric(as.character(results_temp$et2t2.crs))/as.numeric(as.character(results_temp$et1t1.crs))
+    }else{
+      results_temp["ptec"] <- as.numeric(as.character(results_temp$et2t2.vrs))/as.numeric(as.character(results_temp$et1t1.vrs))
+    }
+
+    # Calculate scale efficiency change if using vrs
+    if(rts == "vrs" && scale){
+      results_temp["sec1"] <- (as.numeric(as.character(results_temp$et1t2.crs))/as.numeric(as.character(results_temp$et1t2.vrs)))/(as.numeric(as.character(results_temp$et1t1.crs))/as.numeric(as.character(results_temp$et1t1.vrs)))
+      results_temp["sec2"] <- (as.numeric(as.character(results_temp$et2t2.crs))/as.numeric(as.character(results_temp$et2t2.vrs)))/(as.numeric(as.character(results_temp$et2t1.crs))/as.numeric(as.character(results_temp$et2t1.vrs)))
+      results_temp["sec"] <- (results_temp$sec1 * results_temp$sec2) ^ 0.5
+    }else
+    {
+      results_temp["sec1"] <- NA
+      results_temp["sec2"] <- NA
+      results_temp["sec"] <- NA
+    }
+
+    # Calculate technology change (technology frontier shift)
+    if(rts == "crs"){
+      results_temp["tc1"] <- as.numeric(as.character(results_temp$et1t2.crs))/as.numeric(as.character(results_temp$et2t2.crs))
+      results_temp["tc2"] <- as.numeric(as.character(results_temp$et1t1.crs))/as.numeric(as.character(results_temp$et2t1.crs))
+      results_temp["tc"] <- (results_temp$tc1 * results_temp$tc2) ^ 0.5
+    }else {
+      results_temp["tc1"] <- as.numeric(as.character(results_temp$et1t2.vrs))/as.numeric(as.character(results_temp$et2t2.vrs))
+      results_temp["tc2"] <- as.numeric(as.character(results_temp$et1t1.vrs))/as.numeric(as.character(results_temp$et2t1.vrs))
+      results_temp["tc"] <- (results_temp$tc1 * results_temp$tc2) ^ 0.5
+    }
+
+    # Calculate Malmquist index
+    if(rts == "crs"){
+      results_temp["m.crs"] <- results_temp$tec * results_temp$tc
+    }else
+    {
+      results_temp["m.vrs"] <- results_temp$ptec * results_temp$tc
+    }
+
+    # Create new colume for Year  (t - t + 1)
+    results_temp["Year"] <- paste(Periods[j], Periods[j + 1], sep="-")
+    results <- rbind(results, results_temp)
+
+  }
+  row.names(results) <- seq(1:nrow(results))
+
+  return(results)
+}

@@ -15,6 +15,8 @@ Provides the rts (returns to scale) option values.
 options.rts.l
 }
 
+% Add one or more standard keywords, see file 'KEYWORDS' in the
+% R documentation directory.
 \keyword{ DEA }
 \keyword{ Multiplier DEA Model }
 \keyword{ Cross Efficiency }
@@ -23,5 +25,9 @@ options.rts.l
 \keyword{ Assurance Region }
 \keyword{ Malevolent }
 \keyword{ Benevolent }
-\keyword{ Two-Phase Approach }% __ONLY ONE__ keyword per line
+\keyword{ Two-Phase Approach }
+\keyword{ Super Efficiency }
+\keyword{ SDEA }
+\keyword{ Malmquist Productivity Index }
+\keyword{ MPI }% __ONLY ONE__ keyword per line
 
